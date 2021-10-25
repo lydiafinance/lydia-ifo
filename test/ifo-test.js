@@ -6,7 +6,7 @@ let START_TS;
 let END_TS;
 let NEXT_RELEASE_TS;
 
-describe("IFOV3", function () {
+describe("IFO", function () {
     START_TS = Math.floor(Date.now() / 1000) + 3600; // IFO starts in 1 hour
     END_TS = START_TS + 7200 // IFO wil be live for 2 hours
     NEXT_RELEASE_TS = END_TS + 600;
@@ -101,7 +101,7 @@ describe("IFOV3", function () {
     });
 
     it("30 Deploy IFO contract", async function () {
-        const IFO = await ethers.getContractFactory("IFOV3");
+        const IFO = await ethers.getContractFactory("IFO");
 
         // Constructor error handling
         await expect(IFO.connect(DEPLOYER).deploy(lpToken.address, lpToken.address, START_TS, END_TS, 10, NEXT_RELEASE_TS, DEPLOYER.address)).to.be.revertedWith("Tokens must be be different");
@@ -111,7 +111,7 @@ describe("IFOV3", function () {
 
         ifo = await IFO.connect(DEPLOYER).deploy(lpToken.address, offeringToken.address, START_TS, END_TS, 20, NEXT_RELEASE_TS, DEPLOYER.address);
         await offeringToken.deployed();
-        console.log("IFOV3 address:", ifo.address);
+        console.log("IFO address:", ifo.address);
 
         const owner = await ifo.functions.owner();
         expect(owner[0]).to.equal(DEPLOYER.address);

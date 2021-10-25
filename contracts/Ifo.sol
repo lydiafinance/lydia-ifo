@@ -6,10 +6,10 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 
 /**
- * @title IFOV3
- * @notice It is an upgrade of IFOV2 with an extended offering token release plan.
+ * @title IFO
+ * @notice IFO contract with extended offering token release plan.
  */
-contract IFOV3 is ReentrancyGuard, Ownable {
+contract IFO is ReentrancyGuard, Ownable {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
 
