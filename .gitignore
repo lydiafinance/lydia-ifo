@@ -1,0 +1,14 @@
+
+node_modules/
+artifacts/
+cache/
+flatten/
+
+
+.idea
+.DS_Store
+
+.env
+
+venv/
+timestamp.py
