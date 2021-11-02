@@ -34,6 +34,9 @@ contract IFO is ReentrancyGuard, Ownable {
     // Next token release timestamp. Purpose of this to show the next token release date on the UI.
     uint256 public nextReleaseTimestamp;
 
+    // A flag to know if the admin withdrawn raising amount.
+    bool public raisedWithdrawn;
+
     // Array of PoolCharacteristics of size numberPools
     PoolCharacteristics[numberPools] private _poolInformation;
 
@@ -116,7 +119,8 @@ contract IFO is ReentrancyGuard, Ownable {
         offeringToken = _offeringToken;
         startTimestamp = _startTimestamp;
         endTimestamp = _endTimestamp;
-        releasedPercent = _releasedPercent; // First offering token release will be made once IFO ends
+        releasedPercent = _releasedPercent;
+        // First offering token release will be made once IFO ends
         nextReleaseTimestamp = _nextReleaseTimestamp;
 
         transferOwnership(_adminAddress);
@@ -249,6 +253,7 @@ contract IFO is ReentrancyGuard, Ownable {
      * @dev This function is only callable by admin.
      */
     function finalWithdraw(uint256 _lpAmount, uint256 _offerAmount) external onlyOwner {
+        require(block.timestamp >= endTimestamp + 72 hours, "Can't withdraw now");
         require(_lpAmount <= lpToken.balanceOf(address(this)), "Not enough LP tokens");
         require(_offerAmount <= offeringToken.balanceOf(address(this)), "Not enough offering token");
 
@@ -261,6 +266,37 @@ contract IFO is ReentrancyGuard, Ownable {
         }
 
         emit AdminWithdraw(_lpAmount, _offerAmount);
+    }
+
+    /**
+     * @notice It allows the admin to withdraw lp tokens raised from sale
+     * @dev This function is only callable by admin.
+     */
+    function withdrawRaised() external onlyOwner {
+        require(block.timestamp >= endTimestamp, "Can't withdraw now");
+        require(raisedWithdrawn == false, "Already withdrawn");
+
+        // Calculate raised lp tokens from all pools and send them to the admin
+        uint256 _lpAmount;
+
+        for (uint8 i = 0; i < _poolInformation.length; i++) {
+            uint256 _lpAmountPool;
+            if (_poolInformation[i].totalAmountPool > _poolInformation[i].raisingAmountPool) {
+                _lpAmountPool = _poolInformation[i].raisingAmountPool;
+            } else {
+                _lpAmountPool = _poolInformation[i].totalAmountPool;
+            }
+
+            _lpAmount = _lpAmount.add(_lpAmountPool);
+        }
+
+        if (_lpAmount > 0) {
+            lpToken.safeTransfer(address(msg.sender), _lpAmount);
+        }
+
+        raisedWithdrawn = true;
+
+        emit AdminWithdraw(_lpAmount, 0);
     }
 
     /**
