@@ -153,7 +153,7 @@ contract IFO is ReentrancyGuard, Ownable {
         require(_amount > 0, "Amount must be > 0");
 
         // Transfers funds to this contract
-        lpToken.safeTransferFrom(address(msg.sender), address(this), _amount);
+        lpToken.safeTransferFrom(msg.sender, address(this), _amount);
 
         // Update the user status
         _userInfo[msg.sender][_pid].amountPool = _userInfo[msg.sender][_pid].amountPool.add(_amount);
@@ -206,7 +206,7 @@ contract IFO is ReentrancyGuard, Ownable {
             _userInfo[msg.sender][_pid].claimedPool = true;
 
             // Claimable offering tokens
-            claimableTokenAmount = offeringTokenAmount > 0 ? _claimableTokens(address(msg.sender), _pid) : 0;
+            claimableTokenAmount = offeringTokenAmount > 0 ? _claimableTokens(msg.sender, _pid) : 0;
 
             // Update user info for next harvests
             _userInfo[msg.sender][_pid].claimedTokens = claimableTokenAmount;
@@ -218,22 +218,22 @@ contract IFO is ReentrancyGuard, Ownable {
 
             // Transfer these tokens back to the user if quantity > 0
             if (claimableTokenAmount > 0) {
-                offeringToken.safeTransfer(address(msg.sender), claimableTokenAmount);
+                offeringToken.safeTransfer(msg.sender, claimableTokenAmount);
             }
 
             if (refundingTokenAmount > 0) {
-                lpToken.safeTransfer(address(msg.sender), refundingTokenAmount);
+                lpToken.safeTransfer(msg.sender, refundingTokenAmount);
             }
 
             emit FirstHarvest(msg.sender, claimableTokenAmount, refundingTokenAmount, _pid);
         } else {
             require(_userInfo[msg.sender][_pid].purchasedTokens > 0, "No tokens to harvest");
 
-            uint256 claimableAmount = _claimableTokens(address(msg.sender), _pid);
+            uint256 claimableAmount = _claimableTokens(msg.sender, _pid);
 
             if (claimableAmount > 0) {
                 _userInfo[msg.sender][_pid].claimedTokens = _userInfo[msg.sender][_pid].claimedTokens.add(claimableAmount);
-                offeringToken.safeTransfer(address(msg.sender), claimableAmount);
+                offeringToken.safeTransfer(msg.sender, claimableAmount);
 
                 emit Harvest(msg.sender, claimableAmount, _pid);
             }
@@ -245,7 +245,7 @@ contract IFO is ReentrancyGuard, Ownable {
     * @param _pid: pool id
     */
     function claimableTokens(uint8 _pid) external view returns (uint256) {
-        return _claimableTokens(address(msg.sender), _pid);
+        return _claimableTokens(msg.sender, _pid);
     }
 
     /**
@@ -260,11 +260,11 @@ contract IFO is ReentrancyGuard, Ownable {
         require(_offerAmount <= offeringToken.balanceOf(address(this)), "Not enough offering token");
 
         if (_lpAmount > 0) {
-            lpToken.safeTransfer(address(msg.sender), _lpAmount);
+            lpToken.safeTransfer(msg.sender, _lpAmount);
         }
 
         if (_offerAmount > 0) {
-            offeringToken.safeTransfer(address(msg.sender), _offerAmount);
+            offeringToken.safeTransfer(msg.sender, _offerAmount);
         }
 
         emit AdminWithdraw(_lpAmount, _offerAmount);
@@ -293,7 +293,7 @@ contract IFO is ReentrancyGuard, Ownable {
         }
 
         if (_lpAmount > 0) {
-            lpToken.safeTransfer(address(msg.sender), _lpAmount);
+            lpToken.safeTransfer(msg.sender, _lpAmount);
         }
 
         raisedWithdrawn = true;
@@ -311,7 +311,7 @@ contract IFO is ReentrancyGuard, Ownable {
         require(_tokenAddress != address(lpToken), "Cannot be LP token");
         require(_tokenAddress != address(offeringToken), "Cannot be offering token");
 
-        IERC20(_tokenAddress).safeTransfer(address(msg.sender), _tokenAmount);
+        IERC20(_tokenAddress).safeTransfer(msg.sender, _tokenAmount);
 
         emit AdminTokenRecovery(_tokenAddress, _tokenAmount);
     }
