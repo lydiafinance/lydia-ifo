@@ -255,7 +255,7 @@ contract IFO is ReentrancyGuard, Ownable {
 
     /**
      * @notice It allows the admin to withdraw funds
-     * @param _lpAmount: the number of LP token to withdraw (18 decimals)
+     * @param _lpAmount: the number of LP token to claim more (18 decimals)
      * @param _offerAmount: the number of offering amount to withdraw
      * @dev This function is only callable by admin.
      */
