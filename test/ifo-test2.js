@@ -8,6 +8,7 @@ let NEXT_RELEASE_TS;
 
 /*
 This test demonstrates a sing pool with tax.
+Single unlock. All tokens distributed once, right after the IFO ends.
 Users commit their lp token but not all offering tokens get sold.
 Admin withdraws raised funds after ifo ends.
 */

@@ -9,6 +9,7 @@ let NEXT_RELEASE_TS;
 
 /*
 This test demonstrates a more complex ifo case with 2 pools and both pools overflow.
+Single unlock. All tokens distributed once, right after the IFO ends.
 */
 
 describe("IFO test 3", function () {

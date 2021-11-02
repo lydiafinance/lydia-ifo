@@ -6,8 +6,10 @@ let START_TS;
 let END_TS;
 let NEXT_RELEASE_TS;
 
-
-describe("IFO", function () {
+/*
+This is a comprehensive test with multiple unlocks.
+ */
+describe("IFO test 1", function () {
   START_TS = Math.floor(Date.now() / 1000) + 3600; // IFO starts in 1 hour
   END_TS = START_TS + 7200 // IFO wil be live for 2 hours
   NEXT_RELEASE_TS = END_TS + 600;
