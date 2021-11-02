@@ -152,8 +152,13 @@ contract IFO is ReentrancyGuard, Ownable {
         // Checks that the amount deposited is not inferior to 0
         require(_amount > 0, "Amount must be > 0");
 
+        // Before-after pattern to provide support for reflective tokens
+        uint256 before = lpToken.balanceOf(address(this));
+
         // Transfers funds to this contract
         lpToken.safeTransferFrom(msg.sender, address(this), _amount);
+
+        _amount = lpToken.balanceOf(address(this)).sub(before);
 
         // Update the user status
         _userInfo[msg.sender][_pid].amountPool = _userInfo[msg.sender][_pid].amountPool.add(_amount);
