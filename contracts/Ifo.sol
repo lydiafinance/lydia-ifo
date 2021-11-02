@@ -82,6 +82,9 @@ contract IFO is ReentrancyGuard, Ownable {
     // Event when parameters are set for one of the pools
     event PoolParametersSet(uint256 offeringAmountPool, uint256 raisingAmountPool, uint8 pid);
 
+    // Event when tokens unlocked
+    event TokensReleased(uint256 releasedPercent, uint256 nextReleaseTimestamp);
+
     // Modifier to prevent contracts to participate
     modifier notContract() {
         require(!_isContract(msg.sender), "contract not allowed");
@@ -371,6 +374,8 @@ contract IFO is ReentrancyGuard, Ownable {
 
         releasedPercent = _releasedPercent;
         nextReleaseTimestamp = _nextReleaseTimestamp;
+
+        emit TokensReleased(_releasedPercent, _nextReleaseTimestamp);
     }
 
     /**
