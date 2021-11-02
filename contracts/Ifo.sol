@@ -14,10 +14,10 @@ contract IFO is ReentrancyGuard, Ownable {
     using SafeERC20 for IERC20;
 
     // The LP token used
-    IERC20 public lpToken;
+    IERC20 public immutable lpToken;
 
     // The offering token
-    IERC20 public offeringToken;
+    IERC20 public immutable offeringToken;
 
     // Number of pools
     uint8 public constant numberPools = 2;
