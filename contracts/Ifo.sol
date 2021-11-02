@@ -119,8 +119,7 @@ contract IFO is ReentrancyGuard, Ownable {
         offeringToken = _offeringToken;
         startTimestamp = _startTimestamp;
         endTimestamp = _endTimestamp;
-        releasedPercent = _releasedPercent;
-        // First offering token release will be made once IFO ends
+        releasedPercent = _releasedPercent; // First offering token release will be made once IFO ends
         nextReleaseTimestamp = _nextReleaseTimestamp;
 
         transferOwnership(_adminAddress);
