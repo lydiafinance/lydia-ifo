@@ -80,7 +80,7 @@ contract IFO is ReentrancyGuard, Ownable {
     event NewStartAndEndTimestamps(uint256 startTimestamp, uint256 endTimestamp);
 
     // Event when parameters are set for one of the pools
-    event PoolParametersSet(uint256 offeringAmountPool, uint256 raisingAmountPool, uint8 pid);
+    event PoolParametersSet(uint256 offeringAmountPool, uint256 raisingAmountPool, uint8 indexed pid);
 
     // Event when tokens unlocked
     event TokensReleased(uint256 releasedPercent, uint256 nextReleaseTimestamp);
