@@ -458,11 +458,11 @@ contract IFO is ReentrancyGuard, Ownable {
         uint256[] memory purchasedPools = new uint256[](_pids.length);
         uint256[] memory claimedPools = new uint256[](_pids.length);
 
-        for (uint8 i = 0; i < numberPools; i++) {
-            amountPools[i] = _userInfo[_user][i].amountPool;
-            statusPools[i] = _userInfo[_user][i].claimedPool;
-            purchasedPools[i] = _userInfo[_user][i].purchasedTokens;
-            claimedPools[i] = _userInfo[_user][i].claimedTokens;
+        for (uint8 i = 0; i < _pids.length; i++) {
+            amountPools[i] = _userInfo[_user][_pids[i]].amountPool;
+            statusPools[i] = _userInfo[_user][_pids[i]].claimedPool;
+            purchasedPools[i] = _userInfo[_user][_pids[i]].purchasedTokens;
+            claimedPools[i] = _userInfo[_user][_pids[i]].claimedTokens;
         }
         return (amountPools, statusPools, purchasedPools, claimedPools);
     }
