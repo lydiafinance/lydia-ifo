@@ -265,10 +265,10 @@ contract IFO is ReentrancyGuard, Ownable {
      * @notice It allows the admin to withdraw funds
      * @param _lpAmount: the number of LP token to claim more (18 decimals)
      * @param _offerAmount: the number of offering amount to withdraw
-     * @dev This function is only callable by admin.
+     * @dev This function is only callable by admin and required 48 hours passed since ifo ends.
      */
     function finalWithdraw(uint256 _lpAmount, uint256 _offerAmount) external onlyOwner {
-        require(block.timestamp >= endTimestamp + 72 hours, "Can't withdraw now");
+        require(block.timestamp >= endTimestamp + 48 hours, "Can't withdraw now");
         require(_lpAmount <= lpToken.balanceOf(address(this)), "Not enough LP tokens");
         require(_offerAmount <= offeringToken.balanceOf(address(this)), "Not enough offering token");
 

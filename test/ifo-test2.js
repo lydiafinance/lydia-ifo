@@ -118,12 +118,12 @@ describe("IFO test 2", function () {
     // Still cant run finalWithdraw
     await expect(ifo.connect(DEPLOYER).finalWithdraw(0, 0)).to.be.revertedWith("Can't withdraw now");
 
-    await mine(86400); // 24 hours
+    await mine(86400); // 24 hours passed
 
     // Still can't run finalWithdraw
     await expect(ifo.connect(DEPLOYER).finalWithdraw(0, 0)).to.be.revertedWith("Can't withdraw now");
 
-    await mine(86400 * 2); // 48 hours passed
+    await mine(86400); // 24 hours passed
 
     // Can call finalWithdraw now. Withdraw unsold offering tokens
     await ifo.connect(DEPLOYER).finalWithdraw(0, unsoldTokens);

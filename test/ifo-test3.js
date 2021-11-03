@@ -146,7 +146,7 @@ describe("IFO test 3", function () {
     await ifo.connect(LYDUS).harvestPool(0);
     await ifo.connect(LYDUS).harvestPool(1);
 
-    await mine(86400 * 3);
+    await mine(86400 * 2); // 24 hours passed
 
     // Call finalWithdraw to withdraw tax leaving a small amount of lp tokens on contract to allow all users to harvest.
     const withdraw = toBN(Math.floor(Number(formatBN(allTaxLp))));
