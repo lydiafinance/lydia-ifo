@@ -122,7 +122,8 @@ contract IFO is ReentrancyGuard, Ownable {
         offeringToken = _offeringToken;
         startTimestamp = _startTimestamp;
         endTimestamp = _endTimestamp;
-        releasedPercent = _releasedPercent; // First offering token release will be made once IFO ends
+        releasedPercent = _releasedPercent;
+        // First offering token release will be made once IFO ends
         nextReleaseTimestamp = _nextReleaseTimestamp;
 
         transferOwnership(_adminAddress);
@@ -247,10 +248,17 @@ contract IFO is ReentrancyGuard, Ownable {
 
     /**
     * @notice Wrapper of _claimableTokens
-    * @param _pid: pool id
+    * @param _user: user address
+    * @param _pids[]: array of pids
     */
-    function claimableTokens(uint8 _pid) external view returns (uint256) {
-        return _claimableTokens(msg.sender, _pid);
+    function claimableTokens(address _user, uint8[] calldata _pids) external view returns (uint256[] memory) {
+        uint256[] memory userClaimableTokens = new uint256[](_pids.length);
+
+        for (uint8 i = 0; i < _pids.length; i++) {
+            userClaimableTokens[i] = _claimableTokens(_user, _pids[i]);
+        }
+
+        return userClaimableTokens;
     }
 
     /**

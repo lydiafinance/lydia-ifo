@@ -217,13 +217,13 @@ describe("IFO test 1", function () {
     // Deposited 9, gets 20% of 9 * 0.125 = 1.125 | 1.125 / 100 * 20 = 0.225
 
     // Claimable should be 0.225
-    expect((await ifo.connect(ATYS).claimableTokens(0)).toString()).to.equal(toWei(0.225, offeringDec));
+    expect((await ifo.claimableTokens(ATYS.address, [0]))[0].toString()).to.equal(toWei(0.225, offeringDec));
 
     await ifo.connect(ATYS).harvestPool(0);
     expect((await offeringToken.functions.balanceOf(ATYS.address)).toString()).to.equal(toWei(0.225, offeringDec));
 
     // Claimable should be 0
-    expect((await ifo.connect(ATYS).claimableTokens(0)).toString()).to.equal(toWei(0, offeringDec));
+    expect((await ifo.claimableTokens(ATYS.address, [0]))[0].toString()).to.equal(toWei(0, offeringDec));
 
     // User can harvest again. But should get 0 additional offering tokens.
     await ifo.connect(ATYS).harvestPool(0);
@@ -234,13 +234,13 @@ describe("IFO test 1", function () {
     // Deposited 4, gets 20% of 4 * 0.125 = 0.5 | 0.5 / 100 * 20 = 0.1
 
     // Claimable should be 0.1
-    expect((await ifo.connect(LYDUS).claimableTokens(0)).toString()).to.equal(toWei(0.1, offeringDec));
+    expect((await ifo.claimableTokens(LYDUS.address, [0]))[0].toString()).to.equal(toWei(0.1, offeringDec));
 
     await ifo.connect(LYDUS).harvestPool(0);
     expect((await offeringToken.functions.balanceOf(LYDUS.address)).toString()).to.equal(toWei(0.1, offeringDec));
 
     // Claimable should be 0
-    expect((await ifo.connect(LYDUS).claimableTokens(0)).toString()).to.equal(toWei(0, offeringDec));
+    expect((await ifo.claimableTokens(LYDUS.address, [0]))[0].toString()).to.equal(toWei(0, offeringDec));
   });
 
   it("122 Test user info 3", async function () {
@@ -264,7 +264,7 @@ describe("IFO test 1", function () {
     // Deposited 9, claimed 20% of 1.125 as 0.225. Now should able to claim 30% of remaining as 0.3375
 
     // Claimable should be 0.3375
-    expect((await ifo.connect(ATYS).claimableTokens(0)).toString()).to.equal(toWei(0.3375, offeringDec));
+    expect((await ifo.claimableTokens(ATYS.address, [0]))[0].toString()).to.equal(toWei(0.3375, offeringDec));
 
     await ifo.connect(ATYS).harvestPool(0);
 
@@ -272,7 +272,7 @@ describe("IFO test 1", function () {
     expect((await offeringToken.functions.balanceOf(ATYS.address)).toString()).to.equal(toWei(0.5625, offeringDec));
 
     // Claimable should be 0 now
-    expect((await ifo.connect(ATYS).claimableTokens(0)).toString()).to.equal(toWei(0, offeringDec));
+    expect((await ifo.claimableTokens(ATYS.address, [0]))[0].toString()).to.equal(toWei(0, offeringDec));
 
     // User can harvest again. But should get 0 additional offering tokens.
     await ifo.connect(ATYS).harvestPool(0);
@@ -283,7 +283,7 @@ describe("IFO test 1", function () {
     // Deposited 9, claimed 20% of 0.5 as 0.1. Now should able to claim 30% of remaining as 0.15
 
     // Claimable should be 0.15
-    expect((await ifo.connect(LYDUS).claimableTokens(0)).toString()).to.equal(toWei(0.15, offeringDec));
+    expect((await ifo.claimableTokens(LYDUS.address, [0]))[0].toString()).to.equal(toWei(0.15, offeringDec));
 
     await ifo.connect(LYDUS).harvestPool(0);
 
@@ -291,7 +291,7 @@ describe("IFO test 1", function () {
     expect((await offeringToken.functions.balanceOf(LYDUS.address)).toString()).to.equal(toWei(0.25, offeringDec));
 
     // Claimable should be 0
-    expect((await ifo.connect(LYDUS).claimableTokens(0)).toString()).to.equal(toWei(0, offeringDec));
+    expect((await ifo.claimableTokens(LYDUS.address, [0]))[0].toString()).to.equal(toWei(0, offeringDec));
   });
 
   it("122 Test user info 4", async function () {
@@ -310,7 +310,7 @@ describe("IFO test 1", function () {
     // Deposited 9, claimed 50% of 1.125 as 0.5625. Now should able to claim other 50% of remaining as 0.5625
 
     // Claimable should be 0.5625
-    expect((await ifo.connect(ATYS).claimableTokens(0)).toString()).to.equal(toWei(0.5625, offeringDec));
+    expect((await ifo.claimableTokens(ATYS.address, [0]))[0].toString()).to.equal(toWei(0.5625, offeringDec));
 
     await ifo.connect(ATYS).harvestPool(0);
 
@@ -318,14 +318,14 @@ describe("IFO test 1", function () {
     expect((await offeringToken.functions.balanceOf(ATYS.address)).toString()).to.equal(toWei(1.125, offeringDec));
 
     // Claimable should be 0 now
-    expect((await ifo.connect(ATYS).claimableTokens(0)).toString()).to.equal(toWei(0, offeringDec));
+    expect((await ifo.claimableTokens(ATYS.address, [0]))[0].toString()).to.equal(toWei(0, offeringDec));
   });
 
   it("180 Harvest 6", async function () {
     // Deposited 9, claimed 50% of 0.5 as 0.25. Now should able to claim other 50% of remaining as 0.25
 
     // Claimable should be 0.25
-    expect((await ifo.connect(LYDUS).claimableTokens(0)).toString()).to.equal(toWei(0.25, offeringDec));
+    expect((await ifo.claimableTokens(LYDUS.address, [0]))[0].toString()).to.equal(toWei(0.25, offeringDec));
 
     await ifo.connect(LYDUS).harvestPool(0);
 
@@ -333,7 +333,7 @@ describe("IFO test 1", function () {
     expect((await offeringToken.functions.balanceOf(LYDUS.address)).toString()).to.equal(toWei(0.50, offeringDec));
 
     // Claimable should be 0
-    expect((await ifo.connect(LYDUS).claimableTokens(0)).toString()).to.equal(toWei(0, offeringDec));
+    expect((await ifo.claimableTokens(LYDUS.address, [0]))[0].toString()).to.equal(toWei(0, offeringDec));
   });
 
   it("122 Test user info 5", async function () {
