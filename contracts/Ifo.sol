@@ -14,10 +14,10 @@ contract IFO is ReentrancyGuard, Ownable {
     using SafeERC20 for IERC20;
 
     // The LP token used
-    IERC20 public lpToken;
+    IERC20 public immutable lpToken;
 
     // The offering token
-    IERC20 public offeringToken;
+    IERC20 public immutable offeringToken;
 
     // Number of pools
     uint8 public constant numberPools = 2;
@@ -33,6 +33,9 @@ contract IFO is ReentrancyGuard, Ownable {
 
     // Next token release timestamp. Purpose of this to show the next token release date on the UI.
     uint256 public nextReleaseTimestamp;
+
+    // A flag to know if the admin withdrawn raising amount.
+    bool public raisedWithdrawn;
 
     // Array of PoolCharacteristics of size numberPools
     PoolCharacteristics[numberPools] private _poolInformation;
@@ -77,7 +80,10 @@ contract IFO is ReentrancyGuard, Ownable {
     event NewStartAndEndTimestamps(uint256 startTimestamp, uint256 endTimestamp);
 
     // Event when parameters are set for one of the pools
-    event PoolParametersSet(uint256 offeringAmountPool, uint256 raisingAmountPool, uint8 pid);
+    event PoolParametersSet(uint256 offeringAmountPool, uint256 raisingAmountPool, uint8 indexed pid);
+
+    // Event when tokens unlocked
+    event TokensReleased(uint256 releasedPercent, uint256 nextReleaseTimestamp);
 
     // Modifier to prevent contracts to participate
     modifier notContract() {
@@ -116,7 +122,8 @@ contract IFO is ReentrancyGuard, Ownable {
         offeringToken = _offeringToken;
         startTimestamp = _startTimestamp;
         endTimestamp = _endTimestamp;
-        releasedPercent = _releasedPercent; // First offering token release will be made once IFO ends
+        releasedPercent = _releasedPercent;
+        // First offering token release will be made once IFO ends
         nextReleaseTimestamp = _nextReleaseTimestamp;
 
         transferOwnership(_adminAddress);
@@ -146,8 +153,13 @@ contract IFO is ReentrancyGuard, Ownable {
         // Checks that the amount deposited is not inferior to 0
         require(_amount > 0, "Amount must be > 0");
 
+        // Before-after pattern to provide support for reflective tokens
+        uint256 before = lpToken.balanceOf(address(this));
+
         // Transfers funds to this contract
-        lpToken.safeTransferFrom(address(msg.sender), address(this), _amount);
+        lpToken.safeTransferFrom(msg.sender, address(this), _amount);
+
+        _amount = lpToken.balanceOf(address(this)).sub(before);
 
         // Update the user status
         _userInfo[msg.sender][_pid].amountPool = _userInfo[msg.sender][_pid].amountPool.add(_amount);
@@ -200,7 +212,7 @@ contract IFO is ReentrancyGuard, Ownable {
             _userInfo[msg.sender][_pid].claimedPool = true;
 
             // Claimable offering tokens
-            claimableTokenAmount = offeringTokenAmount > 0 ? _claimableTokens(address(msg.sender), _pid) : 0;
+            claimableTokenAmount = offeringTokenAmount > 0 ? _claimableTokens(msg.sender, _pid) : 0;
 
             // Update user info for next harvests
             _userInfo[msg.sender][_pid].claimedTokens = claimableTokenAmount;
@@ -212,22 +224,22 @@ contract IFO is ReentrancyGuard, Ownable {
 
             // Transfer these tokens back to the user if quantity > 0
             if (claimableTokenAmount > 0) {
-                offeringToken.safeTransfer(address(msg.sender), claimableTokenAmount);
+                offeringToken.safeTransfer(msg.sender, claimableTokenAmount);
             }
 
             if (refundingTokenAmount > 0) {
-                lpToken.safeTransfer(address(msg.sender), refundingTokenAmount);
+                lpToken.safeTransfer(msg.sender, refundingTokenAmount);
             }
 
             emit FirstHarvest(msg.sender, claimableTokenAmount, refundingTokenAmount, _pid);
         } else {
             require(_userInfo[msg.sender][_pid].purchasedTokens > 0, "No tokens to harvest");
 
-            uint256 claimableAmount = _claimableTokens(address(msg.sender), _pid);
+            uint256 claimableAmount = _claimableTokens(msg.sender, _pid);
 
             if (claimableAmount > 0) {
                 _userInfo[msg.sender][_pid].claimedTokens = _userInfo[msg.sender][_pid].claimedTokens.add(claimableAmount);
-                offeringToken.safeTransfer(address(msg.sender), claimableAmount);
+                offeringToken.safeTransfer(msg.sender, claimableAmount);
 
                 emit Harvest(msg.sender, claimableAmount, _pid);
             }
@@ -236,31 +248,70 @@ contract IFO is ReentrancyGuard, Ownable {
 
     /**
     * @notice Wrapper of _claimableTokens
-    * @param _pid: pool id
+    * @param _user: user address
+    * @param _pids[]: array of pids
     */
-    function claimableTokens(uint8 _pid) external view returns (uint256) {
-        return _claimableTokens(address(msg.sender), _pid);
+    function claimableTokens(address _user, uint8[] calldata _pids) external view returns (uint256[] memory) {
+        uint256[] memory userClaimableTokens = new uint256[](_pids.length);
+
+        for (uint8 i = 0; i < _pids.length; i++) {
+            userClaimableTokens[i] = _claimableTokens(_user, _pids[i]);
+        }
+
+        return userClaimableTokens;
     }
 
     /**
      * @notice It allows the admin to withdraw funds
-     * @param _lpAmount: the number of LP token to withdraw (18 decimals)
+     * @param _lpAmount: the number of LP token to claim more (18 decimals)
      * @param _offerAmount: the number of offering amount to withdraw
-     * @dev This function is only callable by admin.
+     * @dev This function is only callable by admin and required 48 hours passed since ifo ends.
      */
     function finalWithdraw(uint256 _lpAmount, uint256 _offerAmount) external onlyOwner {
+        require(block.timestamp >= endTimestamp + 48 hours, "Can't withdraw now");
         require(_lpAmount <= lpToken.balanceOf(address(this)), "Not enough LP tokens");
         require(_offerAmount <= offeringToken.balanceOf(address(this)), "Not enough offering token");
 
         if (_lpAmount > 0) {
-            lpToken.safeTransfer(address(msg.sender), _lpAmount);
+            lpToken.safeTransfer(msg.sender, _lpAmount);
         }
 
         if (_offerAmount > 0) {
-            offeringToken.safeTransfer(address(msg.sender), _offerAmount);
+            offeringToken.safeTransfer(msg.sender, _offerAmount);
         }
 
         emit AdminWithdraw(_lpAmount, _offerAmount);
+    }
+
+    /**
+     * @notice It allows the admin to withdraw lp tokens raised from sale
+     * @dev This function is only callable by admin.
+     */
+    function withdrawRaised() external onlyOwner {
+        require(block.timestamp >= endTimestamp, "Can't withdraw now");
+        require(raisedWithdrawn == false, "Already withdrawn");
+
+        // Calculate raised lp tokens from all pools and send them to the admin
+        uint256 _lpAmount;
+
+        for (uint8 i = 0; i < _poolInformation.length; i++) {
+            uint256 _lpAmountPool;
+            if (_poolInformation[i].totalAmountPool > _poolInformation[i].raisingAmountPool) {
+                _lpAmountPool = _poolInformation[i].raisingAmountPool;
+            } else {
+                _lpAmountPool = _poolInformation[i].totalAmountPool;
+            }
+
+            _lpAmount = _lpAmount.add(_lpAmountPool);
+        }
+
+        if (_lpAmount > 0) {
+            lpToken.safeTransfer(msg.sender, _lpAmount);
+        }
+
+        raisedWithdrawn = true;
+
+        emit AdminWithdraw(_lpAmount, 0);
     }
 
     /**
@@ -273,7 +324,7 @@ contract IFO is ReentrancyGuard, Ownable {
         require(_tokenAddress != address(lpToken), "Cannot be LP token");
         require(_tokenAddress != address(offeringToken), "Cannot be offering token");
 
-        IERC20(_tokenAddress).safeTransfer(address(msg.sender), _tokenAmount);
+        IERC20(_tokenAddress).safeTransfer(msg.sender, _tokenAmount);
 
         emit AdminTokenRecovery(_tokenAddress, _tokenAmount);
     }
@@ -336,6 +387,8 @@ contract IFO is ReentrancyGuard, Ownable {
 
         releasedPercent = _releasedPercent;
         nextReleaseTimestamp = _nextReleaseTimestamp;
+
+        emit TokensReleased(_releasedPercent, _nextReleaseTimestamp);
     }
 
     /**
@@ -418,11 +471,11 @@ contract IFO is ReentrancyGuard, Ownable {
         uint256[] memory purchasedPools = new uint256[](_pids.length);
         uint256[] memory claimedPools = new uint256[](_pids.length);
 
-        for (uint8 i = 0; i < numberPools; i++) {
-            amountPools[i] = _userInfo[_user][i].amountPool;
-            statusPools[i] = _userInfo[_user][i].claimedPool;
-            purchasedPools[i] = _userInfo[_user][i].purchasedTokens;
-            claimedPools[i] = _userInfo[_user][i].claimedTokens;
+        for (uint8 i = 0; i < _pids.length; i++) {
+            amountPools[i] = _userInfo[_user][_pids[i]].amountPool;
+            statusPools[i] = _userInfo[_user][_pids[i]].claimedPool;
+            purchasedPools[i] = _userInfo[_user][_pids[i]].purchasedTokens;
+            claimedPools[i] = _userInfo[_user][_pids[i]].claimedTokens;
         }
         return (amountPools, statusPools, purchasedPools, claimedPools);
     }
@@ -554,7 +607,7 @@ contract IFO is ReentrancyGuard, Ownable {
      */
     function _getUserAllocationPool(address _user, uint8 _pid) internal view returns (uint256) {
         if (_poolInformation[_pid].totalAmountPool > 0) {
-            return _userInfo[_user][_pid].amountPool.mul(1e18).div(_poolInformation[_pid].totalAmountPool.mul(1e6));
+            return _userInfo[_user][_pid].amountPool.mul(1e12).div(_poolInformation[_pid].totalAmountPool);
         } else {
             return 0;
         }
