@@ -10,10 +10,10 @@ async function main() {
 
   let LP_TOKEN = "0x21a735a9c3f00ef3099d6a945f71d148840f4918"; // AVAX-LYD
   let OFFER_TOKEN = "0x33F343fD813f34AE5b18ce0B5C88f3716416cf2C"; // Test token
-  let START_TS = moment.utc().add(10, "days").unix();
-  let END_TS = moment.utc().add(11, "days").unix();
+  let START_TS = "1636461000";
+  let END_TS = "1636462200";
+  let NEXT_RELEASE_TIMESTAMP = "1636462800";
   let RELEASED_PERCENT = 40;
-  let NEXT_RELEASE_TIMESTAMP = 1636462200;
   const ADMIN = deployer.address;
 
   if (process.env.HARDHAT_NETWORK === "mainnet") {
