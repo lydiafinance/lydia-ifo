@@ -12,6 +12,8 @@ async function main() {
   let OFFER_TOKEN = "0x33F343fD813f34AE5b18ce0B5C88f3716416cf2C"; // Test token
   let START_TS = moment.utc().add(10, "days").unix();
   let END_TS = moment.utc().add(11, "days").unix();
+  let RELEASED_PERCENT = 40;
+  let NEXT_RELEASE_TIMESTAMP = 1636462200;
   const ADMIN = deployer.address;
 
   if (process.env.HARDHAT_NETWORK === "mainnet") {
@@ -28,6 +30,8 @@ async function main() {
   console.log("OFFER_TOKEN: ", OFFER_TOKEN);
   console.log("START_TS: ", START_TS);
   console.log("END_TS: ", END_TS);
+  console.log("RELEASED_PERCENT: ", RELEASED_PERCENT);
+  console.log("NEXT_RELEASE_TIMESTAMP: ", NEXT_RELEASE_TIMESTAMP)
   console.log("ADMIN: ", ADMIN);
 
   console.log("Deploying ifo contract with the account:", deployer.address);
@@ -36,8 +40,8 @@ async function main() {
   async function deploy() {
     console.log("Deploying...");
 
-    const Ifo = await ethers.getContractFactory("IFOV2");
-    const ifo = await Ifo.deploy(LP_TOKEN, OFFER_TOKEN, START_TS, END_TS, ADMIN);
+    const Ifo = await ethers.getContractFactory("IFO");
+    const ifo = await Ifo.deploy(LP_TOKEN, OFFER_TOKEN, START_TS, END_TS, RELEASED_PERCENT, NEXT_RELEASE_TIMESTAMP, ADMIN);
     console.log("Ifo address:", ifo.address);
 
     console.log("Done 🎉");
