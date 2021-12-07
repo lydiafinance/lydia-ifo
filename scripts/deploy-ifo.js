@@ -10,15 +10,15 @@ async function main() {
 
   let LP_TOKEN = "0x21a735a9c3f00ef3099d6a945f71d148840f4918"; // AVAX-LYD
   let OFFER_TOKEN = "0x33F343fD813f34AE5b18ce0B5C88f3716416cf2C"; // Test token
-  let START_TS = "1636552800";
-  let END_TS = "1636567200";
-  let NEXT_RELEASE_TIMESTAMP = "1639576800";
-  let RELEASED_PERCENT = 40;
+  let START_TS = "1639058400";
+  let END_TS = "1639072800";
+  let NEXT_RELEASE_TIMESTAMP = "1640268000";
+  let RELEASED_PERCENT = 75;
   const ADMIN = deployer.address;
 
   if (process.env.HARDHAT_NETWORK === "mainnet") {
-    LP_TOKEN = "0xfba4edaad3248b03f1a3261ad06ad846a8e50765"; // AVAX-LYD
-    OFFER_TOKEN = "0x885d748C00A279B67A7749EC6b03301700dd0455"; // Test token
+    LP_TOKEN = "0x5Fc70cF6A4A858Cf4124013047e408367EBa1ace"; // AVAX-USDT.e
+    OFFER_TOKEN = "0xCF7101f34DBA0f3d5fFafD3D3Aa2b3Fc20C08775"; // AVAO
   }
 
   console.log("Deploying to:", process.env.HARDHAT_NETWORK);
