@@ -61,6 +61,12 @@ contract IFO is ReentrancyGuard, Ownable {
         uint256 claimedTokens; // Total claimed offering tokens amount by the user
     }
 
+    // Vault to check if the user eligible to participate
+    VaultInterface public vault;
+
+    // Minimum balance requirement in the vault to participate
+    uint256 public minVaultBalance;
+
     // Admin withdraw events
     event AdminWithdraw(uint256 amountLP, uint256 amountOfferingToken);
 
@@ -84,6 +90,13 @@ contract IFO is ReentrancyGuard, Ownable {
 
     // Event when tokens unlocked
     event TokensReleased(uint256 releasedPercent, uint256 nextReleaseTimestamp);
+
+    // Event when vault updated
+    event VaultSet(address _address);
+
+    // Event when min vault balance set
+    event MinVaultBalanceSet(uint256 balance);
+
 
     // Modifier to prevent contracts to participate
     modifier notContract() {
@@ -149,6 +162,9 @@ contract IFO is ReentrancyGuard, Ownable {
 
         // Checks whether the time is not too late
         require(block.timestamp < endTimestamp, "Too late");
+
+        // Checks if the user eligible to participate
+        require(isEligible(msg.sender), "Not eligible to participate");
 
         // Checks that the amount deposited is not inferior to 0
         require(_amount > 0, "Amount must be > 0");
@@ -354,6 +370,36 @@ contract IFO is ReentrancyGuard, Ownable {
         _poolInformation[_pid].hasTax = _hasTax;
 
         emit PoolParametersSet(_offeringAmountPool, _raisingAmountPool, _pid);
+    }
+
+    /**
+     * @notice Set vault address
+     * @param _address: Vault address
+     * @dev This function is only callable by admin.
+     */
+    function setVault(
+        address _address
+    ) external onlyOwner {
+        require(block.timestamp < startTimestamp, "IFO has started");
+
+        vault = VaultInterface(_address);
+
+        emit VaultSet(_address);
+    }
+
+    /**
+     * @notice Set min vault balance requirement
+     * @param balance: Balance in the vault
+     * @dev This function is only callable by admin.
+     */
+    function setMinVaultBalance(
+        uint256 balance
+    ) external onlyOwner {
+        require(block.timestamp < startTimestamp, "IFO has started");
+
+        minVaultBalance = balance;
+
+        emit MinVaultBalanceSet(balance);
     }
 
     /**
@@ -637,6 +683,37 @@ contract IFO is ReentrancyGuard, Ownable {
     }
 
     /**
+     * @notice Checks id the address has enough tokens in the vault
+     * @param _address: address
+     */
+    function isEligible(address _address) public view returns (bool){
+        if (address(vault) != address(0) && minVaultBalance > 0) {
+            uint256 balance = viewUserVaultBalance(_address);
+
+            if (balance < minVaultBalance) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * @notice Checks id the address has enough tokens in the vault
+     * @param _address: address
+     */
+    function viewUserVaultBalance(address _address) public view returns (uint256){
+        if (address(vault) == address(0)) {
+            return 0;
+        }
+
+        uint256 sharePrice = vault.getPricePerFullShare();
+        uint256 shares = vault.sharesOf(_address);
+        uint256 balance = shares.mul(sharePrice).div(1e18);
+        return balance;
+    }
+
+    /**
      * @notice Check if an address is a contract
      */
     function _isContract(address _addr) internal view returns (bool) {
@@ -646,4 +723,10 @@ contract IFO is ReentrancyGuard, Ownable {
         }
         return size > 0;
     }
+}
+
+abstract contract VaultInterface {
+    function getPricePerFullShare() external view virtual returns (uint256);
+
+    function sharesOf(address account) public view virtual returns (uint256);
 }
