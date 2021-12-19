@@ -43,6 +43,9 @@ contract IFO is ReentrancyGuard, Ownable {
     // It maps the address to pool id to UserInfo
     mapping(address => mapping(uint8 => UserInfo)) private _userInfo;
 
+    // Preparation period
+    uint256 public prepPeriod = 2 hours;
+
     // Struct that contains each pool characteristics
     struct PoolCharacteristics {
         uint256 raisingAmountPool; // amount of tokens raised for the pool (in LP tokens)
@@ -84,6 +87,9 @@ contract IFO is ReentrancyGuard, Ownable {
 
     // Event when tokens unlocked
     event TokensReleased(uint256 releasedPercent, uint256 nextReleaseTimestamp);
+
+    // Event when preparation period updated
+    event PrepPeriodSet(uint256 _time);
 
     // Modifier to prevent contracts to participate
     modifier notContract() {
@@ -186,6 +192,8 @@ contract IFO is ReentrancyGuard, Ownable {
     function harvestPool(uint8 _pid) external nonReentrant notContract {
         // Checks whether it is too early to harvest
         require(block.timestamp > endTimestamp, "Too early to harvest");
+
+        require(!isPreparationPeriod(), "In preparation period");
 
         // Checks whether pool id is valid
         require(_pid < numberPools, "Non valid pool id");
@@ -357,6 +365,21 @@ contract IFO is ReentrancyGuard, Ownable {
     }
 
     /**
+     * @notice Updates preparation period
+     * @param _time: Timestamp
+     * @dev This function is only callable by admin.
+     */
+    function setPrepPeriod(
+        uint256 _time
+    ) external onlyOwner {
+        require(block.timestamp < startTimestamp, "IFO has started");
+
+        prepPeriod = _time;
+
+        emit PrepPeriodSet(_time);
+    }
+
+    /**
      * @notice It allows the admin to update start and end timestamps
      * @param _startTimestamp: the new start timestamp
      * @param _endTimestamp: the new end timestamp
@@ -421,6 +444,22 @@ contract IFO is ReentrancyGuard, Ownable {
         _poolInformation[_pid].totalAmountPool,
         _poolInformation[_pid].sumTaxesOverflow
         );
+    }
+
+    /**
+     * @notice Returns true if we are in the preparation period
+     */
+    function isPreparationPeriod() public view returns (bool){
+        // The sale still in progress or it hasn't started
+        if (block.timestamp < endTimestamp) {
+            return false;
+        }
+
+        if (block.timestamp < (endTimestamp + prepPeriod)) {
+            return true;
+        }
+
+        return false;
     }
 
     /**

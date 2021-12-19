@@ -141,6 +141,8 @@ describe("IFO test 3", function () {
     expect(calculatedLpBalance.gt(realLpBalance)).to.equal(true);
 
     // Harvest
+    await mine(7200);
+
     await ifo.connect(ATYS).harvestPool(0);
     await ifo.connect(ATYS).harvestPool(1);
     await ifo.connect(LYDUS).harvestPool(0);

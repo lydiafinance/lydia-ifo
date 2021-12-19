@@ -131,6 +131,10 @@ describe("IFO test 1", function () {
     await expect(ifo.connect(ATYS).harvestPool(1)).to.be.revertedWith("Too early to harvest");
   });
 
+  it("51 Should not be in preparation period", async function () {
+    expect(await (ifo.isPreparationPeriod())).to.equal(false);
+  });
+
   it("60 Set pool 0", async function () {
     // 1 LP token = 0,125 offering token
     const offering = toWei(1000, offeringDec);
@@ -185,9 +189,11 @@ describe("IFO test 1", function () {
   it("90 Deposit", async function () {
     await expect(ifo.connect(ATYS).depositPool(toWei(100, lpDec), 0)).to.be.revertedWith("Too early");
 
+    await expect(ifo.connect(ATYS).setPrepPeriod(1000)).to.be.revertedWith("Ownable: caller is not the owner");
+
     await startIfo();
 
-    // await mine(30); // Start the IFO
+    await expect(ifo.connect(DEPLOYER).setPrepPeriod(1000)).to.be.revertedWith("IFO has started");
 
     // Commit to pool 0
     await expect(ifo.connect(ATYS).depositPool(0, 0)).to.be.revertedWith("Amount must be > 0");
@@ -203,6 +209,9 @@ describe("IFO test 1", function () {
       await ifo.connect(POOL1_TESTERS[o]).depositPool(toWei(100000, lpDec), 1);
     }
 
+    // Should not be in preparation period
+    expect(await (ifo.isPreparationPeriod())).to.equal(false);
+
     await endIFO(); // End the IFO
 
     await expect(ifo.connect(LYDUS).depositPool(toWei(4, lpDec), 0)).to.be.revertedWith("Too late");
@@ -212,6 +221,16 @@ describe("IFO test 1", function () {
     await testUserInfo(ATYS.address, 0, 9, false, 0, 0);
     await testUserInfo(LYDUS.address, 0, 4, false, 0, 0);
   });
+
+  it("101 Should be in preparation period", async function () {
+    expect(await (ifo.isPreparationPeriod())).to.equal(true);
+    await expect(ifo.connect(ATYS).harvestPool(0)).to.be.revertedWith("In preparation period");
+    await mine(7100);
+    expect(await (ifo.isPreparationPeriod())).to.equal(true);
+    await expect(ifo.connect(LYDUS).harvestPool(0)).to.be.revertedWith("In preparation period");
+    await mine(100);
+    expect(await (ifo.isPreparationPeriod())).to.equal(false);
+  })
 
   it("110 Harvest 1", async function () {
     // Deposited 9, gets 20% of 9 * 0.125 = 1.125 | 1.125 / 100 * 20 = 0.225
