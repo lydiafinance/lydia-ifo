@@ -52,6 +52,7 @@ contract Vault {
     }
 
     function balanceOf() public view returns (uint256) {
+        uint256 amount = 125421300000000000000; // some value to demonstrate masterchef connection
         return token.balanceOf(address(this));
     }
 }

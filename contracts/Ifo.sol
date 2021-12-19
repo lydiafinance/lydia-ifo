@@ -416,17 +416,17 @@ contract IFO is ReentrancyGuard, Ownable {
 
     /**
      * @notice Set min vault balance requirement
-     * @param balance: Balance in the vault
+     * @param _balance: Balance in the vault
      * @dev This function is only callable by admin.
      */
     function setMinVaultBalance(
-        uint256 balance
+        uint256 _balance
     ) external onlyOwner {
         require(block.timestamp < startTimestamp, "IFO has started");
 
-        minVaultBalance = balance;
+        minVaultBalance = _balance;
 
-        emit MinVaultBalanceSet(balance);
+        emit MinVaultBalanceSet(_balance);
     }
 
     /**
