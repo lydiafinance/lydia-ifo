@@ -1,6 +1,6 @@
 const {expect} = require("chai");
 
-const {toWei, mine, getBlockTimestamp} = require("./util");
+const {toWei, mine, getBlockTimestamp, ZERO} = require("./util");
 
 let START_TS;
 let END_TS;
@@ -107,12 +107,12 @@ describe("IFO test 1", function () {
     const IFO = await ethers.getContractFactory("IFO");
 
     // Constructor error handling
-    await expect(IFO.connect(DEPLOYER).deploy(lpToken.address, lpToken.address, START_TS, END_TS, 10, NEXT_RELEASE_TS, DEPLOYER.address)).to.be.revertedWith("Tokens must be be different");
-    await expect(IFO.connect(DEPLOYER).deploy(lpToken.address, offeringToken.address, START_TS, END_TS, 101, NEXT_RELEASE_TS, DEPLOYER.address)).to.be.revertedWith("Release percent must be in range 1-100");
-    await expect(IFO.connect(DEPLOYER).deploy(lpToken.address, offeringToken.address, START_TS, END_TS, 0, NEXT_RELEASE_TS, DEPLOYER.address)).to.be.revertedWith("Release percent must be in range 1-100");
-    await expect(IFO.connect(DEPLOYER).deploy(lpToken.address, offeringToken.address, START_TS, END_TS, 20, END_TS, DEPLOYER.address)).to.be.revertedWith("Next release time must be greater than IFO end time");
+    await expect(IFO.connect(DEPLOYER).deploy(lpToken.address, lpToken.address, START_TS, END_TS, 10, NEXT_RELEASE_TS, DEPLOYER.address, ZERO, 0)).to.be.revertedWith("Tokens must be be different");
+    await expect(IFO.connect(DEPLOYER).deploy(lpToken.address, offeringToken.address, START_TS, END_TS, 101, NEXT_RELEASE_TS, DEPLOYER.address, ZERO, 0)).to.be.revertedWith("Release percent must be in range 1-100");
+    await expect(IFO.connect(DEPLOYER).deploy(lpToken.address, offeringToken.address, START_TS, END_TS, 0, NEXT_RELEASE_TS, DEPLOYER.address, ZERO, 0)).to.be.revertedWith("Release percent must be in range 1-100");
+    await expect(IFO.connect(DEPLOYER).deploy(lpToken.address, offeringToken.address, START_TS, END_TS, 20, END_TS, DEPLOYER.address, ZERO, 0)).to.be.revertedWith("Next release time must be greater than IFO end time");
 
-    ifo = await IFO.connect(DEPLOYER).deploy(lpToken.address, offeringToken.address, START_TS, END_TS, 20, NEXT_RELEASE_TS, DEPLOYER.address);
+    ifo = await IFO.connect(DEPLOYER).deploy(lpToken.address, offeringToken.address, START_TS, END_TS, 20, NEXT_RELEASE_TS, DEPLOYER.address, ZERO, 0);
     await offeringToken.deployed();
     console.log("IFO address:", ifo.address);
 

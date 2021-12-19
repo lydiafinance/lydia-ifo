@@ -1,6 +1,6 @@
 const {expect} = require("chai");
 
-const {mine, getBlockTimestamp, toBN, formatBN} = require("./util");
+const {mine, getBlockTimestamp, toBN, formatBN, ZERO} = require("./util");
 
 let START_TS;
 let END_TS;
@@ -81,7 +81,7 @@ describe("IFO test 3", function () {
 
     // Deploy ifo contract
     const IFO = await ethers.getContractFactory("IFO");
-    const ifo = await IFO.connect(DEPLOYER).deploy(lpToken.address, offeringToken.address, START_TS, END_TS, 100, NEXT_RELEASE_TS, DEPLOYER.address);
+    const ifo = await IFO.connect(DEPLOYER).deploy(lpToken.address, offeringToken.address, START_TS, END_TS, 100, NEXT_RELEASE_TS, DEPLOYER.address, ZERO, 0);
     await offeringToken.deployed();
 
     // Set pool 0

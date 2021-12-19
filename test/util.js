@@ -12,4 +12,7 @@ const formatBN = (bn, decimals) => ethers.utils.formatUnits(bn, decimals).toStri
 
 const getBlockTimestamp = async () => (await ethers.provider.getBlock("latest")).timestamp;
 
-module.exports = {toWei, mine, getBlockTimestamp, formatBN, toBN};
+
+const ZERO = "0x0000000000000000000000000000000000000000";
+
+module.exports = {toWei, mine, getBlockTimestamp, formatBN, toBN, ZERO};
