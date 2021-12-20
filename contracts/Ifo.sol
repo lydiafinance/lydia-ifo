@@ -43,6 +43,15 @@ contract IFO is ReentrancyGuard, Ownable {
     // It maps the address to pool id to UserInfo
     mapping(address => mapping(uint8 => UserInfo)) private _userInfo;
 
+    // Preparation period
+    uint256 public prepPeriod = 2 hours;
+
+    // Vault to check if the user eligible to participate
+    VaultInterface public vault;
+
+    // Minimum balance requirement in the vault to participate
+    uint256 public minVaultBalance;
+
     // Struct that contains each pool characteristics
     struct PoolCharacteristics {
         uint256 raisingAmountPool; // amount of tokens raised for the pool (in LP tokens)
@@ -85,6 +94,15 @@ contract IFO is ReentrancyGuard, Ownable {
     // Event when tokens unlocked
     event TokensReleased(uint256 releasedPercent, uint256 nextReleaseTimestamp);
 
+    // Event when preparation period updated
+    event PrepPeriodSet(uint256 _time);
+
+    // Event when vault updated
+    event VaultSet(address _address);
+
+    // Event when min vault balance set
+    event MinVaultBalanceSet(uint256 balance);
+
     // Modifier to prevent contracts to participate
     modifier notContract() {
         require(!_isContract(msg.sender), "contract not allowed");
@@ -110,7 +128,9 @@ contract IFO is ReentrancyGuard, Ownable {
         uint256 _endTimestamp,
         uint256 _releasedPercent,
         uint256 _nextReleaseTimestamp,
-        address _adminAddress
+        address _adminAddress,
+        address _vault,
+        uint256 _minVaultBalance
     ) public {
         require(_lpToken.totalSupply() >= 0);
         require(_offeringToken.totalSupply() >= 0);
@@ -127,6 +147,9 @@ contract IFO is ReentrancyGuard, Ownable {
         nextReleaseTimestamp = _nextReleaseTimestamp;
 
         transferOwnership(_adminAddress);
+
+        vault = VaultInterface(_vault);
+        minVaultBalance = _minVaultBalance;
     }
 
     /**
@@ -149,6 +172,9 @@ contract IFO is ReentrancyGuard, Ownable {
 
         // Checks whether the time is not too late
         require(block.timestamp < endTimestamp, "Too late");
+
+        // Checks if the user eligible to participate
+        require(isEligible(msg.sender), "Not eligible to participate");
 
         // Checks that the amount deposited is not inferior to 0
         require(_amount > 0, "Amount must be > 0");
@@ -186,6 +212,8 @@ contract IFO is ReentrancyGuard, Ownable {
     function harvestPool(uint8 _pid) external nonReentrant notContract {
         // Checks whether it is too early to harvest
         require(block.timestamp > endTimestamp, "Too early to harvest");
+
+        require(!isPreparationPeriod(), "In preparation period");
 
         // Checks whether pool id is valid
         require(_pid < numberPools, "Non valid pool id");
@@ -357,6 +385,51 @@ contract IFO is ReentrancyGuard, Ownable {
     }
 
     /**
+     * @notice Updates preparation period
+     * @param _time: Timestamp
+     * @dev This function is only callable by admin.
+     */
+    function setPrepPeriod(
+        uint256 _time
+    ) external onlyOwner {
+        require(block.timestamp < startTimestamp, "IFO has started");
+
+        prepPeriod = _time;
+
+        emit PrepPeriodSet(_time);
+    }
+
+    /**
+     * @notice Set vault address
+     * @param _address: Vault address
+     * @dev This function is only callable by admin.
+     */
+    function setVault(
+        address _address
+    ) external onlyOwner {
+        require(block.timestamp < startTimestamp, "IFO has started");
+
+        vault = VaultInterface(_address);
+
+        emit VaultSet(_address);
+    }
+
+    /**
+     * @notice Set min vault balance requirement
+     * @param _balance: Balance in the vault
+     * @dev This function is only callable by admin.
+     */
+    function setMinVaultBalance(
+        uint256 _balance
+    ) external onlyOwner {
+        require(block.timestamp < startTimestamp, "IFO has started");
+
+        minVaultBalance = _balance;
+
+        emit MinVaultBalanceSet(_balance);
+    }
+
+    /**
      * @notice It allows the admin to update start and end timestamps
      * @param _startTimestamp: the new start timestamp
      * @param _endTimestamp: the new end timestamp
@@ -421,6 +494,22 @@ contract IFO is ReentrancyGuard, Ownable {
         _poolInformation[_pid].totalAmountPool,
         _poolInformation[_pid].sumTaxesOverflow
         );
+    }
+
+    /**
+     * @notice Returns true if we are in the preparation period
+     */
+    function isPreparationPeriod() public view returns (bool){
+        // The sale still in progress or it hasn't started
+        if (block.timestamp < endTimestamp) {
+            return false;
+        }
+
+        if (block.timestamp < (endTimestamp + prepPeriod)) {
+            return true;
+        }
+
+        return false;
     }
 
     /**
@@ -637,6 +726,37 @@ contract IFO is ReentrancyGuard, Ownable {
     }
 
     /**
+     * @notice Checks id the address has enough tokens in the vault
+     * @param _address: address
+     */
+    function isEligible(address _address) public view returns (bool){
+        if (address(vault) != address(0) && minVaultBalance > 0) {
+            uint256 balance = getUserVaultBalance(_address);
+
+            if (balance < minVaultBalance) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * @notice Returns address's balance in the vault
+     * @param _address: address
+     */
+    function getUserVaultBalance(address _address) public view returns (uint256){
+        if (address(vault) == address(0)) {
+            return 0;
+        }
+
+        uint256 sharePrice = vault.getPricePerFullShare();
+        uint256 shares = vault.sharesOf(_address);
+        uint256 balance = shares.mul(sharePrice).div(1e18);
+        return balance;
+    }
+
+    /**
      * @notice Check if an address is a contract
      */
     function _isContract(address _addr) internal view returns (bool) {
@@ -646,4 +766,10 @@ contract IFO is ReentrancyGuard, Ownable {
         }
         return size > 0;
     }
+}
+
+abstract contract VaultInterface {
+    function getPricePerFullShare() external view virtual returns (uint256);
+
+    function sharesOf(address account) public view virtual returns (uint256);
 }

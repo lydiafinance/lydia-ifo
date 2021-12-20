@@ -1,6 +1,6 @@
 const {expect} = require("chai");
 
-const {mine, getBlockTimestamp, toBN} = require("./util");
+const {mine, getBlockTimestamp, toBN, ZERO} = require("./util");
 
 let START_TS;
 let END_TS;
@@ -14,7 +14,7 @@ Admin withdraws raised funds after ifo ends.
 */
 
 describe("IFO test 2", function () {
-  START_TS = Math.floor(Date.now() / 1000) + 14400; // IFO starts in 4 hour
+  START_TS = Math.floor(Date.now() / 1000) + 28800; // IFO starts in 8 hour
   END_TS = START_TS + 7200 // IFO wil be live for 4 hours
   NEXT_RELEASE_TS = END_TS + 600;
 
@@ -66,7 +66,7 @@ describe("IFO test 2", function () {
 
     // Deploy ifo contract
     const IFO = await ethers.getContractFactory("IFO");
-    const ifo = await IFO.connect(DEPLOYER).deploy(lpToken.address, offeringToken.address, START_TS, END_TS, 100, NEXT_RELEASE_TS, DEPLOYER.address);
+    const ifo = await IFO.connect(DEPLOYER).deploy(lpToken.address, offeringToken.address, START_TS, END_TS, 100, NEXT_RELEASE_TS, DEPLOYER.address, ZERO, 0);
     await offeringToken.deployed();
 
     // Set pool with tax (participation fee)
@@ -79,6 +79,10 @@ describe("IFO test 2", function () {
     await lpToken.connect(ATYS).functions.approve(ifo.address, atysCommits);
     await lpToken.connect(LYDUS).functions.approve(ifo.address, lydusCommit);
     await lpToken.connect(MANES).functions.approve(ifo.address, manesCommits);
+
+    // Update preparation period
+    await ifo.connect(DEPLOYER).setPrepPeriod(3600);
+    expect(await ifo.prepPeriod()).to.equal(3600);
 
     // Start ifo, commit tokens
     await startIfo();
@@ -99,6 +103,9 @@ describe("IFO test 2", function () {
     expect(raisedLpTokens).to.equal(totalCommits);
 
     await expect(ifo.connect(DEPLOYER).withdrawRaised()).to.be.revertedWith("Already withdrawn");
+
+    // Preparation period ends
+    await mine(3600);
 
     // Harvest
     await ifo.connect(ATYS).harvestPool(0);
